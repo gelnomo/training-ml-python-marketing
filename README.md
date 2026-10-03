@@ -29,6 +29,7 @@ Binary classification project that predicts which existing bank customers are mo
 - [Results](#results)
 - [Key takeaways](#key-takeaways)
 - [Improved pipeline (v2)](#improved-pipeline-v2)
+- [Conclusion](#conclusion)
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
 - [Future work](#future-work)
@@ -221,6 +222,53 @@ Results go to `outputs/`:
 | `best_params.json` | Optuna's best parameters (with `--tune`) |
 
 The original submissions used `Customer_id` as the ID column header, while the competition page shows `CustomerID`. If Kaggle rejects the file, run with `--id-header CustomerID`.
+
+## Conclusion
+
+### All results in one table
+
+The table compares every model from the original notebook (v1) and the improved pipeline (v2). The **F1** column is the F1 score of the "responds" class (`Target = 1`), the class the competition scores.
+
+| Rank | Version | Model | Tuning / threshold | Kaggle public F1 | Local F1 | Local ROC AUC |
+|---|---|---|---|---|---|---|
+| 1 | v2 | **XGBoost** | Defaults, threshold 0.340 | not submitted | **0.6762** | 0.6735 |
+| 2 | v2 | **Ensemble (mean of 6 models)** | Threshold 0.355 | not submitted | 0.6759 | **0.6751** |
+| 3 | v2 | HistGradientBoosting | Defaults, threshold 0.350 | not submitted | 0.6757 | 0.6735 |
+| 4 | v2 | LightGBM | Defaults, threshold 0.345 | not submitted | 0.6754 | 0.6724 |
+| 5 | v2 | CatBoost | Defaults, threshold 0.345 | not submitted | 0.6753 | 0.6730 |
+| 6 | v2 | Logistic regression | Threshold 0.355 | not submitted | 0.6741 | 0.6687 |
+| 7 | v2 | Random forest | Threshold 0.310 | not submitted | 0.6726 | 0.6679 |
+| – | – | *Baseline: everyone responds* | – | – | *0.6665* | *0.5000* |
+| 8 | v1 | GradientBoostingClassifier | Grid search, threshold 0.5 | **0.63851** | 0.6572 | – |
+| 9 | v1 | CatBoostClassifier | Grid search, threshold 0.5 | 0.62837 | 0.6561 | – |
+| 10 | v1 | CatBoostClassifier | Randomized search, threshold 0.5 | 0.62500 | 0.6556 | – |
+| 11 | v1 | RandomForestClassifier | Grid search, threshold 0.5 | 0.61824 | 0.6367 | – |
+| 12 | v1 | GradientBoostingClassifier | Randomized search, threshold 0.5 | 0.61655 | 0.6572 | – |
+| 13 | v1 | LogisticRegression | Grid search, threshold 0.5 | 0.60135 | 0.6462 | – |
+| 14 | v1 | RandomForestClassifier | Randomized search, threshold 0.5 | 0.59628 | 0.6369 | – |
+| 15 | v1 | LogisticRegression | Randomized search, threshold 0.5 | 0.59459 | n/a ¹ | – |
+| 16 | v1 | DecisionTreeClassifier | Grid / randomized search, threshold 0.5 | 0.52702 | 0.6450 / 0.6407 | – |
+| – | v1 | ANN (Keras + PCA) | Manual, threshold 0.5 | not submitted | 0.6360 ² | – |
+
+Ranking: v2 models by local F1, then v1 models by Kaggle public F1 (their only score on the real test set).
+
+How to read the scores:
+- **Kaggle public F1:** the score Kaggle gave each v1 submission, on about 40% of `test.csv`. This is the only score measured on the real test data. The v2 models have not been submitted yet.
+- **Local F1, v1:** from the classification reports saved in the notebook (25% hold-out, 13,579 rows, threshold 0.5). Those outputs come from the notebook's final run, while the Kaggle scores came from earlier runs, so the two columns don't always line up.
+- **Local F1 and AUC, v2:** 5-fold out-of-fold scores on all 63,999 training rows (one seed, no Optuna tuning).
+- v1 and v2 local scores use different data splits, so they are **close but not exactly comparable**. Small differences (around 0.001) between v2 models are within noise.
+
+¹ The notebook evaluated this model using the GradientBoosting predictions by mistake, so its saved F1 is not its own.
+² Keras' batch-averaged F1 metric, so only approximate.
+
+### Which model is best?
+
+- **Best submitted model (v1):** **GradientBoostingClassifier with grid search**, with a Kaggle public F1 of **0.63851**.
+- **Best model overall (v2):** the **ensemble** is the recommended choice. Its F1 (0.6759) is tied with the best single model, XGBoost (0.6762), but it has the highest AUC (0.6751), meaning it ranks customers best, and averaging several models usually makes it more stable on unseen data. XGBoost is the best single model if you want something simpler.
+- **Why v2 scores higher:** mostly the **F1-optimal threshold** (about 0.35 instead of 0.5), which raised every model's F1 from about 0.62 to about 0.675. The leak-free cluster features and the new rate and transaction features add a smaller gain in AUC.
+- **Honest limit:** all models beat the "everyone responds" baseline (F1 0.6665) by only about 0.01. The features carry a weak signal (AUC ≈ 0.67), so no model separates responders from non-responders very well.
+
+**Next step:** submit `outputs/submission_ensemble.csv` and `outputs/submission_xgb.csv` to Kaggle, if late submissions are allowed, to confirm the v2 gain on the real test set. Then run `python -m src.train --tune --n-trials 50 --seeds 3` to see whether tuning adds anything.
 
 ## Repository structure
 
