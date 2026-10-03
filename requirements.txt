@@ -1,0 +1,19 @@
+# Core data stack
+numpy
+pandas
+scipy
+scikit-learn
+
+# Visualisation
+matplotlib
+seaborn
+plotly
+yellowbrick
+
+# Models
+catboost
+tensorflow
+
+# Notebook tooling
+jupyter
+tqdm
