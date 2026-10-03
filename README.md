@@ -10,6 +10,11 @@ Binary classification project that predicts which existing bank customers are mo
 
 **Lead author:** Erwin Mongui, main contributor behind this work ([see Team](#team))
 
+This repository has two parts:
+
+1. **[Part 1: Original competition solution (2023)](#part-1-original-competition-solution-2023)**: the notebook submitted to Kaggle during the competition. Its best public score was **0.63851** F1.
+2. **[Part 2: New test to improve the original results](#part-2-new-test-to-improve-the-original-results)**: a follow-up experiment done after the competition. It reviews the original code, fixes its bugs, and tests new models, tuning, and ensembles to see how much the results can be improved. Its best local score is **0.6770** F1 (cross-validation, not yet submitted to Kaggle).
+
 | Competition | Details |
 |---|---|
 | Host | Kaggle in-class competition, AML-1413 Winter 2023 |
@@ -17,7 +22,7 @@ Binary classification project that predicts which existing bank customers are mo
 | Task | Binary classification (`Target`) |
 | Evaluation metric | **F1 score** |
 | Best public score (original submission) | **0.63851** (GradientBoostingClassifier) |
-| Best local score (improved pipeline) | **0.6770** F1, 5-fold CV (stacking ensemble) |
+| Best local score (Part 2, new test) | **0.6770** F1, 5-fold CV (stacking ensemble) |
 
 ---
 
@@ -26,10 +31,11 @@ Binary classification project that predicts which existing bank customers are mo
 - [Competition](#competition)
 - [Business problem](#business-problem)
 - [Dataset](#dataset)
-- [Approach](#approach)
-- [Results](#results)
-- [Key takeaways](#key-takeaways)
-- [Improved pipeline (v2)](#improved-pipeline-v2)
+- [Part 1: Original competition solution (2023)](#part-1-original-competition-solution-2023)
+  - [Approach](#approach)
+  - [Results](#results)
+  - [Key takeaways](#key-takeaways)
+- [Part 2: New test to improve the original results](#part-2-new-test-to-improve-the-original-results)
 - [Conclusion](#conclusion)
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
@@ -85,16 +91,18 @@ Field descriptions come from the competition's data page. Neither file has missi
 
 > **Data license:** the data is "Subject to Competition Rules" on Kaggle. It is included here for reproducibility. See the competition's [Rules](https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413/rules) page before reusing it.
 
-## Approach
+## Part 1: Original competition solution (2023)
 
-This section describes the original competition submission in [`target_marketing_canadian_bank.ipynb`](target_marketing_canadian_bank.ipynb). A cleaner, improved version is described in [Improved pipeline (v2)](#improved-pipeline-v2).
+### Approach
 
-### 1. Exploratory data analysis
+This part describes the solution submitted during the competition, in [`target_marketing_canadian_bank.ipynb`](target_marketing_canadian_bank.ipynb). The code and its results are kept as they were submitted. The follow-up work to improve these results is in [Part 2](#part-2-new-test-to-improve-the-original-results).
+
+#### 1. Exploratory data analysis
 - Distributions, box plots, and correlation heatmaps for every numeric column.
 - Most continuous features (for example `Balance` and the transactions) are strongly right-skewed.
 - Products, transactions, activity indicators, and previous campaign results are correlated with each other, and the competitive rates are correlated with `RateBefore` and `ReferenceRate`. These groups shaped the feature engineering.
 
-### 2. Feature engineering
+#### 2. Feature engineering
 - **Aggregate features:** total products owned, sum of transactions, number of external accounts, and average competitive rate.
 - **K-Means cluster features:** the number of clusters for each feature combination was chosen with the elbow method (Yellowbrick `KElbowVisualizer`), for example:
   - `Balance` + sum of transactions
@@ -105,10 +113,10 @@ This section describes the original competition submission in [`target_marketing
 - **One-hot encoding** of discrete columns such as `ActivityIndicator`, `RegularInteractionIndicator`, and `PreviousCampaignResult`.
 - **Scaling** of large-valued columns, and dropping columns that the new aggregates replace.
 
-### 3. Outlier handling
+#### 3. Outlier handling
 Several outlier-removal methods were tested (Z-score, robust Z-score, IQR, winsorization, DBSCAN, and Isolation Forest). Every removal lowered the score, so the final model keeps all rows.
 
-### 4. Modelling
+#### 4. Modelling
 The data was split 75/25 (stratified), and each model was tuned with **GridSearchCV** and **RandomizedSearchCV**:
 
 - CatBoostClassifier
@@ -120,7 +128,7 @@ The data was split 75/25 (stratified), and each model was tuned with **GridSearc
 
 Each model was evaluated with a confusion matrix, accuracy, precision, recall, F1-score, and ROC AUC. Feature importance was inspected for the tree-based models.
 
-## Results
+### Results
 
 Scores as recorded in the notebook. "Kaggle F1" is the public leaderboard F1 score, computed on about 40% of the test data. "Local score" is the score on the 25% hold-out split.
 
@@ -139,16 +147,27 @@ Scores as recorded in the notebook. "Kaggle F1" is the public leaderboard F1 sco
 
 **Best submission:** GradientBoostingClassifier with grid search, with an F1 score of **0.63851** on the public leaderboard.
 
-## Key takeaways
+### Key takeaways
 
 - **Data understanding mattered more than model choice.** Gradient-boosted trees, random forests, logistic regression, and the neural network all landed between about 0.60 and 0.64. The engineered features moved the score more than switching algorithms did.
 - **Boosting models performed best.** GradientBoosting and CatBoost were consistently at the top.
 - **Removing outliers hurt the score.** The "outliers" carried real signal about customer behaviour.
 - **The models are only moderately good at finding responders.** False negatives stayed high, which directly lowers F1. More feature work or threshold tuning would be needed before using this in a real campaign.
 
-## Improved pipeline (v2)
+## Part 2: New test to improve the original results
 
-After reviewing the original notebook, I rebuilt the modelling as a reproducible script in [`src/`](src/). The main changes fix problems in the original notebook.
+> **This is a new test, done after the competition closed.** It was not part of the original Kaggle submission. Its goal is to answer one question: *how much can the original results be improved?*
+
+To answer it, I reviewed the original notebook, fixed the bugs I found, and rebuilt the modelling as a reproducible script in [`src/`](src/) (called **v2** below, with the original notebook as **v1**). Then I tested new features, new models, hyperparameter tuning, and ensembles, measuring each change with the same cross-validation so the results can be compared fairly.
+
+The steps of the new test:
+
+1. **Review** the original code and fix its bugs (next table).
+2. **Rebuild** the pipeline with leak-free features and 5-fold cross-validation.
+3. **Tune the threshold** for F1, the competition metric.
+4. **Test** what helps and what doesn't: features, clusters, models, and tuning.
+5. **Tune and combine** the best models (Optuna, then blending and stacking).
+6. **Compare** everything against the original results ([Conclusion](#conclusion)).
 
 ### Issues found in the original notebook
 
@@ -162,7 +181,7 @@ After reviewing the original notebook, I rebuilt the modelling as a reproducible
 | The logistic regression randomized-search metrics used the GradientBoosting predictions (`gbr_y_pred`) | Those reported metrics belong to another model | Every model is evaluated on its own predictions |
 | `PreviousCampaignResult` is always 0 in `test.csv` | The feature cannot help the test predictions | Dropped |
 
-The original notebook is kept unchanged, because its saved outputs and Kaggle scores came from that exact code.
+The original notebook is kept unchanged, because its saved outputs and Kaggle scores came from that exact code. All fixes are in the new v2 code.
 
 ### What v2 adds
 
@@ -196,7 +215,7 @@ All scores are 5-fold out-of-fold ROC AUC on the 63,999 training rows, using Lig
 
 Main lessons: the signal in this data is weak and mostly already in the raw columns. Tuning toward simpler, regularised trees and combining models gives small but consistent gains. More feature engineering on its own did not.
 
-### v2 results (tuned)
+### Results of the new test (v2, tuned)
 
 Command: `python -m src.train --tune --n-trials 40 --no-clusters` (5-fold CV, one seed, on a 4-core machine; about 40 minutes in total). All scores are **out-of-fold on the 63,999 training rows**, not Kaggle leaderboard scores. Results on another machine or with other library versions may differ slightly.
 
@@ -239,7 +258,7 @@ The ranking is more useful for the business than F1. For the weighted blend, ran
 
 So if the bank can only call 10% of customers, the model's top picks respond 75% of the time, compared with 50% for a random selection.
 
-### Running v2
+### Running the new test (v2)
 
 ```bash
 pip install pandas scikit-learn lightgbm xgboost catboost optuna
@@ -265,6 +284,21 @@ Results go to `outputs/`:
 The original submissions used `Customer_id` as the ID column header, while the competition page shows `CustomerID`. If Kaggle rejects the file, run with `--id-header CustomerID`.
 
 ## Conclusion
+
+### Did the new test improve the original results?
+
+**Yes, locally.** The table compares the best model from each part. Part 2's score has not been confirmed on Kaggle yet.
+
+| | Part 1: original (v1) | Part 2: new test (v2) | Change |
+|---|---|---|---|
+| Best model | GradientBoostingClassifier | Stacking ensemble of tuned models | |
+| F1 (local) | 0.6572 (25% hold-out) | **0.6770** (5-fold CV) | **+0.020** |
+| F1 (Kaggle public) | 0.63851 | not submitted yet | |
+| Threshold | 0.5 | 0.35 (tuned for F1) | |
+| Validation | One 75/25 split | 5-fold cross-validation | More reliable |
+| Known issues | 7 (see [issues](#issues-found-in-the-original-notebook)) | Fixed | |
+
+Most of the gain comes from tuning the threshold for F1. The rest comes from fixing the bugs, tuning the models toward small, regularised trees, and combining them. The details follow.
 
 ### All results in one table
 
@@ -321,15 +355,15 @@ How to read the scores:
 ```
 .
 ├── configs/
-│   └── best_params.json                   # Optuna-tuned parameters (reuse with --params-file)
+│   └── best_params.json                   # Part 2: Optuna-tuned parameters (reuse with --params-file)
 ├── data/
 │   ├── train.csv                          # Labelled training data
 │   └── test.csv                           # Unlabelled data to score
 ├── src/
-│   ├── features.py                        # v2 feature engineering (leak-free K-Means clusters)
-│   └── train.py                           # v2 CV training, tuning, threshold, ensembles, submissions
-├── target_marketing_canadian_bank.ipynb   # Original competition notebook: EDA, features, models, results
-├── exploration_early_experiments.ipynb    # Early EDA and first model experiments (see note below)
+│   ├── features.py                        # Part 2 (new test): feature engineering, leak-free K-Means clusters
+│   └── train.py                           # Part 2 (new test): CV training, tuning, threshold, ensembles
+├── target_marketing_canadian_bank.ipynb   # Part 1: original competition notebook (as submitted)
+├── exploration_early_experiments.ipynb    # Part 1: early EDA and first model experiments (see note below)
 ├── requirements.txt
 └── README.md
 ```
