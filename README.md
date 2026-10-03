@@ -1,6 +1,6 @@
 # Target Marketing for a Canadian Bank
 
-Binary classification project that predicts which existing bank customers are most likely to respond to a deposit marketing campaign. It was built for the Kaggle competition [Target Marketing for Canadian Bank (2023W AML-1413)](https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413).
+Binary classification project that predicts which existing bank customers are most likely to respond to a deposit marketing campaign. It was built for the Kaggle in-class competition [Target Marketing for Canadian Bank (AML-1413, Winter 2023)](https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413).
 
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange)
@@ -9,10 +9,19 @@ Binary classification project that predicts which existing bank customers are mo
 
 **Author:** Erwin Mongui
 
+| Competition | Details |
+|---|---|
+| Host | Kaggle in-class competition, AML-1413 Winter 2023 |
+| Dates | Mar 13, 2023 – Apr 17, 2023 |
+| Task | Binary classification (`Target`) |
+| Evaluation metric | **F1 score** |
+| Best public score | **0.63851** (GradientBoostingClassifier) |
+
 ---
 
 ## Table of contents
 
+- [Competition](#competition)
 - [Business problem](#business-problem)
 - [Dataset](#dataset)
 - [Approach](#approach)
@@ -21,14 +30,27 @@ Binary classification project that predicts which existing bank customers are mo
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
 - [Future work](#future-work)
+- [Citation](#citation)
 
 ---
 
+## Competition
+
+- **Competition page:** https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413
+- **Metric:** F1 score on the `Target` column.
+- **Leaderboard:** the public leaderboard used about 40% of the test data, and the final private standings used the other 60%.
+- **Submission format:** a CSV file with a header and one row per test customer:
+
+  ```
+  CustomerID,Target
+  CTSP######,1
+  ```
+
 ## Business problem
 
-Bank "A" wants to grow its deposit balances by running a marketing campaign that offers promotional interest rates to existing clients. Contacting every customer is expensive, so the goal is to **find the customers who are most likely to respond** to the campaign.
+Bank "A" wants to run a marketing campaign that offers existing clients promotional interest rates to attract deposit balances. Contacting every customer is expensive, so the task is to **find the right set of customers who are most likely to respond** to the campaign.
 
-This is a supervised binary classification problem: given a customer's profile, predict `Target` (1 = responds to the campaign, 0 = does not).
+This is a supervised binary classification problem: given a customer's profile, predict `Target` (1 = responds to the campaign, 0 = does not). Because the metric is F1, the model has to find responders (recall) without flagging too many non-responders (precision).
 
 ## Dataset
 
@@ -45,16 +67,18 @@ The data comes from a real international bank and has been de-identified to prot
 | `Target` | 1 if the customer responded to the campaign (train only) |
 | `Balance` | Credit card balance |
 | `PreviousCampaignResult` | Result of the last campaign |
-| `Product1` … `Product6` | Products owned by the customer |
+| `Product1` … `Product6` | Different products owned by the customer |
 | `Transaction1` … `Transaction9` | Last 9 transactions made by the customer |
-| `ExternalAccount1` … `ExternalAccount7` | Accounts the customer holds at other institutions |
-| `ActivityIndicator` | Customer activity level |
-| `RegularInteractionIndicator` | How regularly the customer interacts with the bank |
-| `CompetitiveRate1` … `CompetitiveRate7` | Rates offered by competitors |
-| `RateBefore` | Rate the customer had before the campaign |
-| `ReferenceRate` | Reference interest rate |
+| `ExternalAccount1` … `ExternalAccount7` | External accounts held by the customer, including bills |
+| `ActivityIndicator` | Number of activities done by the customer, including telebanking and going to the bank |
+| `RegularInteractionIndicator` | How often the customer interacts with the bank (rating scale) |
+| `CompetitiveRate1` … `CompetitiveRate7` | Interest rates offered to the customer |
+| `RateBefore` | Interest rates the customer had on the products before the competitive rates were offered |
+| `ReferenceRate` | Interest rates the customer had on the products after negotiating the competitive rates |
 
-Neither file has missing or duplicated values.
+Field descriptions come from the competition's data page. Neither file has missing or duplicated values.
+
+> **Data license:** the data is "Subject to Competition Rules" on Kaggle. It is included here for reproducibility. See the competition's [Rules](https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413/rules) page before reusing it.
 
 ## Approach
 
@@ -93,9 +117,9 @@ Each model was evaluated with a confusion matrix, accuracy, precision, recall, F
 
 ## Results
 
-Scores as recorded in the notebook. "Kaggle score" is the public leaderboard score, which Kaggle computes on about 40% of the test data. "Local score" is the score on the 25% hold-out split.
+Scores as recorded in the notebook. "Kaggle F1" is the public leaderboard F1 score, computed on about 40% of the test data. "Local score" is the score on the 25% hold-out split.
 
-| Model | Tuning | Kaggle score | Local score |
+| Model | Tuning | Kaggle F1 (public) | Local score |
 |---|---|---|---|
 | **GradientBoostingClassifier** | Grid search | **0.63851** | 0.62824 |
 | CatBoostClassifier | Grid search | 0.62837 | 0.62910 |
@@ -108,7 +132,7 @@ Scores as recorded in the notebook. "Kaggle score" is the public leaderboard sco
 | DecisionTreeClassifier | Grid / randomized search | 0.52702 | 0.57762 |
 | ANN (Keras + PCA) | Manual | not submitted | 0.6248 accuracy |
 
-**Best submission:** GradientBoostingClassifier with grid search, at **0.63851** on the public leaderboard.
+**Best submission:** GradientBoostingClassifier with grid search, with an F1 score of **0.63851** on the public leaderboard.
 
 ## Key takeaways
 
@@ -116,7 +140,7 @@ Scores as recorded in the notebook. "Kaggle score" is the public leaderboard sco
 - **Boosting models performed best.** GradientBoosting and CatBoost were consistently at the top.
 - **Removing outliers hurt the score.** The "outliers" carried real signal about customer behaviour.
 - **Activity-indicator features were the most important** in the tree-based models.
-- **The models are only moderately good at finding responders.** False negatives stayed high, so more feature work or threshold tuning would be needed before using this in a real campaign.
+- **The models are only moderately good at finding responders.** False negatives stayed high, which directly lowers F1. More feature work or threshold tuning would be needed before using this in a real campaign.
 
 ## Repository structure
 
@@ -150,7 +174,13 @@ The notebook reads the data from the Kaggle input folder when it runs on Kaggle,
 
 ## Future work
 
-- Tune the decision threshold (or use class weights) to reduce false negatives.
+- Tune the decision threshold to maximise F1 directly (the models currently use the default 0.5), or use class weights to reduce false negatives.
 - Try LightGBM or XGBoost, and stack the best boosting models.
 - Use cross-validated target encoding instead of one-hot encoding for high-cardinality indicators.
 - Move the notebook logic into reusable Python modules with a reproducible training script.
+
+## Citation
+
+Competition:
+
+> Ashish Gupta. *Target Marketing for Canadian Bank*. https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413, 2023. Kaggle.
