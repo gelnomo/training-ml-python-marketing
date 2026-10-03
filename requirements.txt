@@ -12,7 +12,10 @@ yellowbrick
 
 # Models
 catboost
-tensorflow
+lightgbm
+xgboost
+optuna
+tensorflow  # only needed for the original notebook's neural network
 
 # Notebook tooling
 jupyter

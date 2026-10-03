@@ -18,3 +18,4 @@ env/
 # Generated submission files
 *_20[0-9][0-9]_[0-9][0-9]_[0-9][0-9].csv
 catboost_info/
+outputs/

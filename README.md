@@ -5,6 +5,7 @@ Binary classification project that predicts which existing bank customers are mo
 ![Python](https://img.shields.io/badge/Python-3.7%2B-blue)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-orange)
 ![CatBoost](https://img.shields.io/badge/CatBoost-Gradient%20Boosting-yellow)
+![LightGBM](https://img.shields.io/badge/LightGBM%20%7C%20XGBoost-Boosting-green)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-red)
 
 **Lead author:** Erwin Mongui, main contributor behind this work ([see Team](#team))
@@ -27,6 +28,7 @@ Binary classification project that predicts which existing bank customers are mo
 - [Approach](#approach)
 - [Results](#results)
 - [Key takeaways](#key-takeaways)
+- [Improved pipeline (v2)](#improved-pipeline-v2)
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
 - [Future work](#future-work)
@@ -83,7 +85,7 @@ Field descriptions come from the competition's data page. Neither file has missi
 
 ## Approach
 
-The full pipeline is in [`target_marketing_canadian_bank.ipynb`](target_marketing_canadian_bank.ipynb).
+This section describes the original competition submission in [`target_marketing_canadian_bank.ipynb`](target_marketing_canadian_bank.ipynb). A cleaner, improved version is described in [Improved pipeline (v2)](#improved-pipeline-v2).
 
 ### 1. Exploratory data analysis
 - Distributions, box plots, and correlation heatmaps for every numeric column.
@@ -94,9 +96,9 @@ The full pipeline is in [`target_marketing_canadian_bank.ipynb`](target_marketin
 - **Aggregate features:** total products owned, sum of transactions, number of external accounts, and average competitive rate.
 - **K-Means cluster features:** the number of clusters for each feature combination was chosen with the elbow method (Yellowbrick `KElbowVisualizer`), for example:
   - `Balance` + sum of transactions
-  - `Balance` + `PreviousCampaignResult`
-  - `RateBefore` + average interest rate
-  - `Balance` + products
+  - `Balance` + `Product1`
+  - `Transaction4` + `Product2` + `Transaction3`
+  - Pairs of transactions, such as `Transaction4` + `Transaction5`
   - Total products + sum of transactions + `ActivityIndicator`
 - **One-hot encoding** of discrete columns such as `ActivityIndicator`, `RegularInteractionIndicator`, and `PreviousCampaignResult`.
 - **Scaling** of large-valued columns, and dropping columns that the new aggregates replace.
@@ -140,8 +142,66 @@ Scores as recorded in the notebook. "Kaggle F1" is the public leaderboard F1 sco
 - **Data understanding mattered more than model choice.** Gradient-boosted trees, random forests, logistic regression, and the neural network all landed between about 0.60 and 0.64. The engineered features moved the score more than switching algorithms did.
 - **Boosting models performed best.** GradientBoosting and CatBoost were consistently at the top.
 - **Removing outliers hurt the score.** The "outliers" carried real signal about customer behaviour.
-- **Activity-indicator features were the most important** in the tree-based models.
 - **The models are only moderately good at finding responders.** False negatives stayed high, which directly lowers F1. More feature work or threshold tuning would be needed before using this in a real campaign.
+
+## Improved pipeline (v2)
+
+After reviewing the original notebook, I rebuilt the modelling as a reproducible script in [`src/`](src/). The main changes fix problems in the original notebook.
+
+### Issues found in the original notebook
+
+| Issue | Effect | Fix in v2 |
+|---|---|---|
+| K-Means and `StandardScaler` were fitted **separately** on train and test | Cluster *k* in the test set was not the same group as cluster *k* in the training set, so the cluster features were inconsistent at prediction time | Fitted on the training folds only, then applied to validation and test data (`ClusterFeatures` transformer) |
+| `ActivityIndicator` (a count with 611 distinct values) was one-hot encoded | About 600 sparse columns, and test values unseen in training were silently set to 0 | Kept as a number, with a log transform and ratio features |
+| Thresholds were left at 0.5 and models were tuned for ROC AUC or accuracy | The competition metric is F1, which is very sensitive to the threshold | The threshold is chosen to maximise F1 on out-of-fold predictions |
+| Models were scored on one 75/25 split and the final model saw only 75% of the data | Noisy scores, and less data for the submission | Stratified 5-fold CV, with test predictions averaged across folds |
+| `feature_importance()` plotted `argsort()` ranks instead of importances | The feature-importance charts and their conclusions are not reliable | Real importances are saved to `outputs/feature_importance_<model>.csv` |
+| The logistic regression randomized-search metrics used the GradientBoosting predictions (`gbr_y_pred`) | Those reported metrics belong to another model | Every model is evaluated on its own predictions |
+| `PreviousCampaignResult` is always 0 in `test.csv` | The feature cannot help the test predictions | Dropped |
+
+The original notebook is kept unchanged, because its saved outputs and Kaggle scores came from that exact code.
+
+### What v2 adds
+
+- **More features:** transaction statistics (positive/negative sums, counts, max, standard deviation), log transforms, balance ratios, and rate features that describe how good the offer is compared with what the customer has, such as `MaxCompetitiveRate - RateBefore` and the number of offers above `RateBefore`.
+- **More models:** logistic regression, random forest, extra trees, scikit-learn HistGradientBoosting, LightGBM, XGBoost, and CatBoost.
+- **Optional Optuna tuning** for LightGBM, XGBoost, and CatBoost (`--tune`).
+- **Ensemble:** the average of all models' probabilities, with its own F1-optimal threshold.
+- **Seed averaging** (`--seeds N`) for more stable scores.
+
+### A note about F1 on this dataset
+
+The training set is balanced: 50.0% of customers responded. With F1, predicting that **every** customer responds already gives precision ≈ 0.50 and recall = 1.0, so F1 ≈ **0.667**. That is higher than the original best public score (0.63851), because the original models used a 0.5 threshold, which trades recall for precision.
+
+So v2 reports **ROC AUC** to show how well each model ranks customers, and **F1 at the tuned threshold** for the competition score. The script prints the "everyone responds" baseline so you can see how much the model actually adds. In a real campaign, the useful output is the ranking of customers by probability, not the F1 number.
+
+### v2 results
+
+Run `python -m src.train` to reproduce. The out-of-fold results table is printed at the end and saved to `outputs/results.csv`.
+
+### Running v2
+
+```bash
+pip install pandas scikit-learn lightgbm xgboost catboost optuna
+
+python -m src.train                                   # 6 models, 5-fold CV
+python -m src.train --tune --n-trials 50 --seeds 3    # tuned and seed-averaged (slower)
+python -m src.train --models lgbm catboost            # only some models
+python -m src.train --help                            # all options
+```
+
+Results go to `outputs/`:
+
+| File | Content |
+|---|---|
+| `results.csv` | Out-of-fold AUC, log loss, accuracy, F1 at 0.5, best threshold, and F1 at that threshold for each model |
+| `submission_<model>.csv`, `submission_ensemble.csv` | Kaggle submission files (thresholded at the F1-optimal value) |
+| `oof_predictions.csv`, `test_probabilities.csv` | Probabilities, for stacking or further analysis |
+| `feature_importance_<model>.csv` | Feature importances of the tree models |
+| `best_params.json` | Optuna's best parameters (with `--tune`) |
+
+The original submissions used `Customer_id` as the ID column header, while the competition page shows `CustomerID`. If Kaggle rejects the file, run with `--id-header CustomerID`.
 
 ## Repository structure
 
@@ -150,7 +210,10 @@ Scores as recorded in the notebook. "Kaggle F1" is the public leaderboard F1 sco
 ├── data/
 │   ├── train.csv                          # Labelled training data
 │   └── test.csv                           # Unlabelled data to score
-├── target_marketing_canadian_bank.ipynb   # Main notebook: EDA, feature engineering, models, results
+├── src/
+│   ├── features.py                        # v2 feature engineering (leak-free K-Means clusters)
+│   └── train.py                           # v2 CV training, threshold tuning, ensemble, submissions
+├── target_marketing_canadian_bank.ipynb   # Original competition notebook: EDA, features, models, results
 ├── exploration_early_experiments.ipynb    # Early EDA and first model experiments
 ├── requirements.txt
 └── README.md
@@ -175,10 +238,14 @@ The notebook reads the data from the Kaggle input folder when it runs on Kaggle,
 
 ## Future work
 
-- Tune the decision threshold to maximise F1 directly (the models currently use the default 0.5), or use class weights to reduce false negatives.
-- Try LightGBM or XGBoost, and stack the best boosting models.
-- Use cross-validated target encoding instead of one-hot encoding for high-cardinality indicators.
-- Move the notebook logic into reusable Python modules with a reproducible training script.
+Ideas not yet in v2, roughly in order of expected value:
+
+- **Stacking:** train a logistic regression on `outputs/oof_predictions.csv` instead of a plain average.
+- **Weighted ensemble:** search for blend weights on the out-of-fold predictions.
+- **Feature selection:** drop features with near-zero importance, or use permutation importance to find features that hurt.
+- **Target encoding** of `ActivityIndicator` and `RegularInteractionIndicator`, fitted inside each fold.
+- **Adversarial validation:** check whether `test.csv` looks different from `train.csv` (for example, `PreviousCampaignResult` is always 0 in test), and validate on the most test-like training rows.
+- **Business view:** report lift and gains charts (responders found in the top 10%, 20%, … of customers ranked by probability), which matter more for a real campaign than F1.
 
 ## Team
 
