@@ -178,7 +178,26 @@ So v2 reports **ROC AUC** to show how well each model ranks customers, and **F1 
 
 ### v2 results
 
-Run `python -m src.train` to reproduce. The out-of-fold results table is printed at the end and saved to `outputs/results.csv`.
+Results from one default run (`python -m src.train`: 5-fold CV, one seed, no tuning) on a 4-core machine, which took about 6 minutes. All scores are **out-of-fold on the 63,999 training rows**, not Kaggle leaderboard scores. Results on another machine or with other library versions may differ slightly.
+
+| Model | ROC AUC | F1 @ 0.5 | Best threshold | F1 @ best threshold |
+|---|---|---|---|---|
+| **Ensemble (mean)** | **0.6751** | 0.6199 | 0.355 | 0.6759 |
+| HistGradientBoosting | 0.6735 | 0.6184 | 0.350 | 0.6757 |
+| XGBoost | 0.6735 | 0.6183 | 0.340 | 0.6762 |
+| CatBoost | 0.6730 | 0.6182 | 0.345 | 0.6753 |
+| LightGBM | 0.6724 | 0.6169 | 0.345 | 0.6754 |
+| Logistic regression | 0.6687 | 0.6195 | 0.355 | 0.6741 |
+| Random forest | 0.6679 | 0.6189 | 0.310 | 0.6726 |
+| *Baseline: everyone responds* | – | 0.6665 | – | – |
+
+What this shows:
+- **Threshold tuning is the biggest F1 gain.** Every model goes from about 0.62 to about 0.675 F1 just by lowering the threshold to about 0.35.
+- **The models only beat the "everyone responds" baseline by about 0.01 F1.** The data has a weak signal (AUC ≈ 0.67), so the F1-optimal strategy is to contact most customers (about 79% at the chosen threshold).
+- **Boosting models and the ensemble rank customers best.** The ensemble has the highest AUC, but the differences between the boosting libraries are small.
+- In LightGBM, the most-used features (by split count) were `Balance`, the K-Means distance features, `BalancePerProduct`, `Transaction4`, and the transaction-to-balance ratio.
+
+These are local CV scores. The real test is submitting `outputs/submission_ensemble.csv` (or another file) to Kaggle, if late submissions are still accepted.
 
 ### Running v2
 
