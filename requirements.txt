@@ -1,0 +1,22 @@
+# Core data stack
+numpy
+pandas
+scipy
+scikit-learn
+
+# Visualisation
+matplotlib
+seaborn
+plotly
+yellowbrick
+
+# Models
+catboost
+lightgbm
+xgboost
+optuna
+tensorflow  # only needed for the original notebook's neural network
+
+# Notebook tooling
+jupyter
+tqdm

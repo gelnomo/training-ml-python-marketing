@@ -1,0 +1,36 @@
+{
+  "logreg": {
+    "C": 0.8471801418819978
+  },
+  "hist_gb": {
+    "learning_rate": 0.04247693415690718,
+    "max_iter": 422,
+    "max_leaf_nodes": 16,
+    "min_samples_leaf": 21,
+    "l2_regularization": 6.912737143496816
+  },
+  "lgbm": {
+    "n_estimators": 1033,
+    "learning_rate": 0.02336320623099312,
+    "num_leaves": 8,
+    "min_child_samples": 74,
+    "subsample": 0.7831077946943236,
+    "colsample_bytree": 0.42663986394723036,
+    "reg_lambda": 19.3285519637855
+  },
+  "xgb": {
+    "n_estimators": 766,
+    "learning_rate": 0.013323829443202782,
+    "max_depth": 5,
+    "min_child_weight": 1.3916995552118092,
+    "subsample": 0.7431693937957838,
+    "colsample_bytree": 0.31279740769900105,
+    "reg_lambda": 13.577874795816856
+  },
+  "catboost": {
+    "iterations": 1667,
+    "learning_rate": 0.013060820167894874,
+    "depth": 6,
+    "l2_leaf_reg": 34.6763570404443
+  }
+}

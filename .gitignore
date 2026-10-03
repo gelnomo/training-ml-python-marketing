@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Generated submission files
+*_20[0-9][0-9]_[0-9][0-9]_[0-9][0-9].csv
+catboost_info/
+outputs/
