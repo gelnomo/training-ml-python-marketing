@@ -329,10 +329,12 @@ How to read the scores:
 │   ├── features.py                        # v2 feature engineering (leak-free K-Means clusters)
 │   └── train.py                           # v2 CV training, tuning, threshold, ensembles, submissions
 ├── target_marketing_canadian_bank.ipynb   # Original competition notebook: EDA, features, models, results
-├── exploration_early_experiments.ipynb    # Early EDA and first model experiments
+├── exploration_early_experiments.ipynb    # Early EDA and first model experiments (see note below)
 ├── requirements.txt
 └── README.md
 ```
+
+**About `exploration_early_experiments.ipynb`:** an earlier, simpler attempt (logistic regression, linear SVM, KNN, decision tree, MLP, random forest, all at a 0.5 threshold). It had a filter bug that kept only about 69 training rows. With the fix, plus pandas 2 compatibility and corrected DBSCAN / Isolation Forest outlier detection, it runs end to end in about 16 minutes and keeps 38,270 rows after outlier removal. On its 20% hold-out, the best model (MLP) reaches 61.5% accuracy and 0.563 F1, below the main notebook and the v2 pipeline. Removing about 40% of the rows as outliers is likely part of the reason, which matches the main notebook's finding that outlier removal hurts.
 
 ## Getting started
 
