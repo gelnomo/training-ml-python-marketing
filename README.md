@@ -7,7 +7,7 @@ Binary classification project that predicts which existing bank customers are mo
 ![CatBoost](https://img.shields.io/badge/CatBoost-Gradient%20Boosting-yellow)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-Keras-red)
 
-**Author:** Erwin Mongui
+**Lead author:** Erwin Mongui, main contributor behind this work ([see Team](#team))
 
 | Competition | Details |
 |---|---|
@@ -30,6 +30,7 @@ Binary classification project that predicts which existing bank customers are mo
 - [Repository structure](#repository-structure)
 - [Getting started](#getting-started)
 - [Future work](#future-work)
+- [Team](#team)
 - [Citation](#citation)
 
 ---
@@ -178,6 +179,18 @@ The notebook reads the data from the Kaggle input folder when it runs on Kaggle,
 - Try LightGBM or XGBoost, and stack the best boosting models.
 - Use cross-validated target encoding instead of one-hot encoding for high-cardinality indicators.
 - Move the notebook logic into reusable Python modules with a reproducible training script.
+
+## Team
+
+This project was submitted by **Group Theta** for the AML-1413 (Winter 2023) in-class competition.
+
+| Member | Role |
+|---|---|
+| **Erwin Mongui (883945)** | **Lead author, main contributor behind this work** |
+| Dev Makwana (885064) | Team member |
+| Aparna Manjalavil (887001) | Team member |
+| Yasar Mansuri (884738) | Team member |
+| Amarnadh Movva (884107) | Team member |
 
 ## Citation
 
