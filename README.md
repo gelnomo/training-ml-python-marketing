@@ -42,6 +42,7 @@ This repository has two parts:
 - [Future work](#future-work)
 - [Team](#team)
 - [Citation](#citation)
+- [License](#license)
 
 ---
 
@@ -365,6 +366,7 @@ How to read the scores:
 ├── target_marketing_canadian_bank.ipynb   # Part 1: original competition notebook (as submitted)
 ├── exploration_early_experiments.ipynb    # Part 1: early EDA and first model experiments (see note below)
 ├── requirements.txt
+├── LICENSE
 └── README.md
 ```
 
@@ -414,5 +416,11 @@ This project was submitted by **Group Theta** for the AML-1413 (Winter 2023) in-
 Competition:
 
 > Ashish Gupta. *Target Marketing for Canadian Bank*. https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413, 2023. Kaggle.
+
+## License
+
+The code and notebooks are released under the [MIT License](LICENSE).
+
+The data in `data/` is not covered by it. It is "Subject to Competition Rules" on Kaggle; see the competition's [Rules](https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413/rules) page before reusing it.
 
 <img src="https://ga4-readme-pixel.erwinmongui.workers.dev/pixel.gif?path=training-ml-python-marketing" width="1" height="1" alt=""/>
