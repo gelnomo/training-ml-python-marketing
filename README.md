@@ -414,3 +414,5 @@ This project was submitted by **Group Theta** for the AML-1413 (Winter 2023) in-
 Competition:
 
 > Ashish Gupta. *Target Marketing for Canadian Bank*. https://www.kaggle.com/competitions/target-marketing-for-canadian-bank-2023w-aml1413, 2023. Kaggle.
+
+<img src="https://ga4-readme-pixel.erwinmongui.workers.dev/pixel.gif?path=training-ml-python-marketing" width="1" height="1" alt=""/>
